@@ -25,6 +25,7 @@ user_schema = UserSchema()
 
 class UserRegister(Resource):
     @classmethod
+    @jwt_required
     def post(cls):
         user_json = request.get_json()
         user = user_schema.load(user_json)
