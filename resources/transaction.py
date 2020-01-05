@@ -1,7 +1,8 @@
 from flask_restful import Resource
 from flask import request
-from models.transaction import TransactionModel
 from schemas.transaction import TransactionSchema
+from models.transaction import TransactionModel
+from flask_jwt_extended import jwt_required
 
 ERROR_INSERTING = "An error occurred while inserting the transaction."
 TRANSACTION_NOT_FOUND = "Transaction not found."
@@ -13,6 +14,7 @@ transaction_list_schema = TransactionSchema(many=True)
 
 class Transaction(Resource):
     @classmethod
+    @jwt_required
     def get(cls, amt: int):
         transactions = TransactionModel.find_by_amt(amt)
         if transactions:
@@ -22,6 +24,7 @@ class Transaction(Resource):
         return {"message": TRANSACTION_NOT_FOUND}, 404
 
     @classmethod
+    @jwt_required
     def post(cls, amt: int):
         transaction_json = request.get_json()
         transaction_json["amt"] = amt
@@ -37,12 +40,14 @@ class Transaction(Resource):
         return transaction_schema.dump(transaction), 201
 
     @classmethod
+    @jwt_required
     def delete(cls, amt: int):
         pass
 
 
 class TransactionList(Resource):
     @classmethod
+    @jwt_required
     def get(cls):
         return {
             "transactions": transaction_list_schema.dump(TransactionModel.find_all())

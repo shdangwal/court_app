@@ -15,6 +15,13 @@ from resources.student import (
     StudentList
 )
 from resources.pending import PendingFees
+from resources.user import (
+    UserRegister,
+    UserLogin,
+    User,
+    TokenRefresh,
+    UserLogout
+)
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
@@ -53,6 +60,11 @@ api.add_resource(TransactionList, "/transactions")
 api.add_resource(Student, "/student/<string:name>")
 api.add_resource(StudentList, "/students")
 api.add_resource(PendingFees, "/pending")
+api.add_resource(UserRegister, "/register")
+api.add_resource(User, "/user/<int:user_id>")
+api.add_resource(UserLogin, "/login")
+api.add_resource(TokenRefresh, "/refresh")
+api.add_resource(UserLogout, "/logout")
 
 if __name__ == '__main__':
     db.init_app(app)

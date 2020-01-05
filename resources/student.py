@@ -3,6 +3,7 @@ from flask import request
 from models.student import StudentModel
 from schemas.student import StudentSchema
 from models.transaction import TransactionModel
+from flask_jwt_extended import jwt_required
 
 NAME_ALREADY_EXISTS = "A student with name '{}' already exists."
 ERROR_INSERTING = "An error occurred while inserting the student."
@@ -15,6 +16,7 @@ student_list_schema = StudentSchema(many=True)
 
 class Student(Resource):
     @classmethod
+    @jwt_required
     def get(cls, name: str):
         student = StudentModel.find_by_name(name)
         if student:
@@ -22,6 +24,7 @@ class Student(Resource):
         return {"message": STUDENT_NOT_FOUND}, 400
 
     @classmethod
+    @jwt_required
     def post(cls, name: str):
         if StudentModel.find_by_name(name):
             return {"message": NAME_ALREADY_EXISTS.format(name)}, 400
@@ -41,6 +44,7 @@ class Student(Resource):
         return student_schema.dump(student), 201
     
     @classmethod
+    @jwt_required
     def delete(cls, name: str):
         student = StudentModel.find_by_name(name)
         if student:
@@ -51,6 +55,7 @@ class Student(Resource):
 
 class StudentList(Resource):
     @classmethod
+    @jwt_required
     def get(cls):
         return {
             "students": student_list_schema.dump(StudentModel.find_all())
