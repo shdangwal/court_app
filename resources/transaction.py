@@ -1,65 +1,49 @@
-from flask_restful import Resource, reqparse
-from datetime import datetime
+from flask_restful import Resource
+from flask import request
 from models.transaction import TransactionModel
+from schemas.transaction import TransactionSchema
+
+ERROR_INSERTING = "An error occurred while inserting the transaction."
+TRANSACTION_NOT_FOUND = "Transaction not found."
+TRANSACTION_DELETED = "Item deleted."
+
+transaction_schema = TransactionSchema()
+transaction_list_schema = TransactionSchema(many=True)
 
 
 class Transaction(Resource):
-    parser = reqparse.ReuestParser()
-    parser.add_argument('name',
-                        type=str,
-                        required=True,
-                        help="This field cannot be left blank!"
-                        )
-    parser.add_argument('amt',
-                        type=int,
-                        required=True,
-                        help="This field cannot be left blank!"
-                        )
-    parser.add_argument('from_date',
-                        type=datetime.date.fromisoformat,
-                        required=True,
-                        help="This field cannot be left blank!"
-                        )
-    parser.add_argument('to_date',
-                        type=datetime.date.fromisoformat,
-                        required=True,
-                        help="This field cannot be left blank!"
-                        )
+    @classmethod
+    def get(cls, amt: int):
+        transactions = TransactionModel.find_by_amt(amt)
+        if transactions:
+            return {
+                "transactions": transaction_list_schema.dump(transactions)
+            }, 200
+        return {"message": TRANSACTION_NOT_FOUND}, 404
 
     @classmethod
-    def get_name_from_argument(cls):
-        data = cls.parser.parse_args()
-        name = data['name']
-        return name
+    def post(cls, amt: int):
+        transaction_json = request.get_json()
+        transaction_json["amt"] = amt
 
-    def get(self):
-        name = self.get_name_from_argument()
-        transaction = TransactionModel.find_by_name(name)
-        if transaction:
-            return transaction.json()
-        else:
-            return {
-                'message': "Transaction from user with name '{}' does not exist.".format(name)
-            }, 400
-                     
-    def post(self):
-        data = Transaction.parser.parse_args()
-        trans = TransactionModel(**data)
+        transaction = transaction_schema.load(transaction_json)
         try:
-            trans.save_to_db()
-        except:
-            return {'message': "An error occurred inserting the transaction."}, 500
-        return trans.json(), 201
+            transaction.save_to_db()
+        except Exception as ex:
+            return {
+                "message": ERROR_INSERTING,
+                "err": ex
+            }, 500
+        return transaction_schema.dump(transaction), 201
 
-    def delete(self):
-        name = self.get_name_from_argument()
-        trans = TransactionModel.find_by_name(name)
-        if trans:
-            trans.delete_from_db()
-            return {'message': "Item Deleted."}
-        return {'message': 'Item not found.'}, 404
+    @classmethod
+    def delete(cls, amt: int):
+        pass
 
 
 class TransactionList(Resource):
-    def get(self):
-        pass
+    @classmethod
+    def get(cls):
+        return {
+            "transactions": transaction_list_schema.dump(TransactionModel.find_all())
+        }, 200

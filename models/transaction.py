@@ -1,46 +1,31 @@
+from typing import List
 from db import db
 
 
 class TransactionModel(db.Model):
     __tablename__ = 'transactions'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    amt = db.Column(db.Integer)
-    from_date = db.Column(db.DateTime)
-    to_date = db.column(db.DateTime)
-    
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    student_name = db.column(db.String, db.ForeignKey('students.name'))
-    stud = db.relationship('StudentModel')
-    
-    def __init__(self, amt, from_date, to_date):
-        self.amt = amt
-        self.from_date = from_date
-        self. to_date = to_date
-        
-    def json(self):
-        return {
-            'id': self.id,
-            'student_id': self.student_id,
-            'student_name': self.student_name,
-            'amt': self.amt,
-            'from_date': self.from_date,
-            'to_date': self.to_date
-        }
-        
+    amt = db.Column(db.Integer, nullable=False)
+    from_date = db.Column(db.DateTime, nullable=False)
+    to_date = db.Column(db.DateTime, nullable=False)
+
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'),
+                           nullable=False)
+    student = db.relationship('StudentModel')
+
     @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name=name).all()
-    
+    def find_by_amt(cls, amt) -> List["TransactionModel"]:
+        return cls.query.filter_by(amt=amt).all()
+
     @classmethod
-    def find_all(cls):
+    def find_all(cls) -> List['TransactionModel']:
         return cls.query.all()
-    
-    def save_to_db(self):
+
+    def save_to_db(self) -> None:
         db.session.add(self)
         db.session.commit()
-        
-    def delete_from_db(self):
-        db.session.delete(self) 
+
+    def delete_from_db(self) -> None:
+        db.session.delete(self)
         db.session.commit()
-    
